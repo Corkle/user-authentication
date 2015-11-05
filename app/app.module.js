@@ -7,7 +7,7 @@ app.config(['$httpProvider', '$stateProvider', '$urlRouterProvider', function ($
 
 app.run(['$rootScope', '$state', function ($rootScope, $state) {
     $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
-        DEBUG('previousState:', fromState);
+        
         $state.previous = fromState;
     });
 }]);

@@ -1,7 +1,7 @@
-app.service('authenticationInterceptor', ['userSession','$state', function(userSession, $state) {
+app.service('authenticationInterceptor', ['userSession','$injector', function(userSession, $injector) {
     this.request = function(request) {
         if (request.url.match('/api/') && !userSession.loggedIn) {
-            $state.go('login');
+            $injector.get('$state').go('login');
         }
         return request;
     };

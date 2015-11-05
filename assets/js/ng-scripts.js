@@ -7,7 +7,7 @@ app.config(['$httpProvider', '$stateProvider', '$urlRouterProvider', function ($
 
 app.run(['$rootScope', '$state', function ($rootScope, $state) {
     $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
-        DEBUG('previousState:', fromState);
+        
         $state.previous = fromState;
     });
 }]);
@@ -20,10 +20,10 @@ function DEBUG(msg, obj) {
 app.controller('AppCtrl', [function() {
     
 }]);
-app.service('authenticationInterceptor', ['userSession','$state', function(userSession, $state) {
+app.service('authenticationInterceptor', ['userSession','$injector', function(userSession, $injector) {
     this.request = function(request) {
         if (request.url.match('/api/') && !userSession.loggedIn) {
-            $state.go('login');
+            $injector.get('$state').go('login');
         }
         return request;
     };
@@ -51,14 +51,17 @@ app.config(['$stateProvider', function ($stateProvider) {
 }]);
 
 app.controller('LoginCtrl', ['userSession', '$state', function (userSession, $state) {
-    var ctrl = this;
-    ctrl.previousPage = $state.previous;
+    var ctrl = this;    
+    ctrl.previousPage = $state.previous.name !== '' ? $state.previous : 'home';
     ctrl.login = function (username, password) {
+        ctrl.loginFailed = null;
         if (username == 'user' && password == 'password') {
             userSession.loggedIn = true;
-            $state.go(ctrl.previousPage || 'home');
+            $state.go(ctrl.previousPage);
+        } else {
+            ctrl.loginFailed = true;
         }
     };
 }]);
 angular.module("templates", []).run(["$templateCache", function($templateCache) {$templateCache.put("components/home/home.html","<h1>Home</h1><p>{{ ::home.text }}</p>");
-$templateCache.put("components/login/login.html","<h1>Login</h1><form name=\"loginForm\" ng-submit=\"loginForm.$valid && ctrl.login(username, password)\"><div class=\"field\"><label>Username:</label><input type=\"text\" ng-model=\"username\" name=\"username\"></div><div class=\"field\"><label>Password:</label><input type=\"password\" ng-model=\"password\" name=\"password\"></div></form>");}]);
+$templateCache.put("components/login/login.html","<h1>Login</h1><form name=\"loginForm\" ng-submit=\"loginForm.$valid && ctrl.login(username, password)\"><p ng-if=\"ctrl.loginFailed\">Your username & password combination is invalid</p><div class=\"field\"><label>Username:</label><input type=\"text\" ng-model=\"username\" name=\"username\" required></div><div class=\"field\"><label>Password:</label><input type=\"password\" ng-model=\"password\" name=\"password\" required></div><div><button type=\"submit\">Login</button></div></form>");}]);

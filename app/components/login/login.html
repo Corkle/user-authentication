@@ -2,12 +2,18 @@
 
 
 <form name="loginForm" ng-submit="loginForm.$valid && ctrl.login(username, password)">
+    <p ng-if="ctrl.loginFailed">Your username & password combination is invalid</p>
     <div class="field">
         <label>Username: </label>
-        <input type="text" ng-model="username" name="username" />
+        <input type="text" ng-model="username" name="username" required/>
+<!--        <p ng-if="loginForm.username.$error.required">You did not enter a username</p>-->
     </div>
     <div class="field">
         <label>Password: </label>
-        <input type="password" ng-model="password" name="password" />
+        <input type="password" ng-model="password" name="password" required/>
+<!--        <p ng-if="loginForm.password.$error.required">You did not enter a password</p>-->
+    </div>
+    <div>
+        <button type="submit">Login</button>
     </div>
 </form>
