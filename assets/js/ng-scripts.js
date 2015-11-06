@@ -22,10 +22,15 @@ app.controller('AppCtrl', [function() {
 }]);
 app.service('authenticationInterceptor', ['userSession','$injector', function(userSession, $injector) {
     this.request = function(request) {
-        if (request.url.match('/api/') && !userSession.loggedIn) {
+        if (request.url.match(/api/) && !userSession.loggedIn) {
             $injector.get('$state').go('login');
         }
         return request;
+    };
+}]);
+app.service('ghRepos', ['$http', function($http) {
+    return function() {
+      return $http.get('https://api.github.com/repositories');  
     };
 }]);
 app.service('userSession', function() {
@@ -35,7 +40,12 @@ app.config(['$stateProvider', function($stateProvider) {
     $stateProvider.state('home', {
         url: '/',
         templateUrl: 'components/home/home.html',
-        controller: 'HomeCtrl as home'
+        controller: 'HomeCtrl as home',
+        resolve: {
+            repos: function(ghRepos) {
+                return ghRepos();
+            }
+        }
     });
 }]);
 
@@ -44,20 +54,35 @@ app.controller('HomeCtrl', [function() {
 }]);
 app.config(['$stateProvider', function ($stateProvider) {
     $stateProvider.state('login', {
-        url: '/login',
-        templateUrl: './app/components/login/login.html',
-        controller: 'LoginCtrl as ctrl'
-    });
+            url: '/login',
+            templateUrl: './app/components/login/login.html',
+            controller: 'LoginCtrl as ctrl'
+        })
+        .state('logout', {
+            url: '/logout',
+            controller: ['userSession', '$state', function (userSession, $state) {
+                userSession.loggedIn = false;
+                $state.go('login');
+            }]
+        });
 }]);
 
 app.controller('LoginCtrl', ['userSession', '$state', function (userSession, $state) {
-    var ctrl = this;    
-    ctrl.previousPage = $state.previous.name !== '' ? $state.previous : 'home';
+    var ctrl = this;
+    ctrl.previousPage = function () {
+        var previousState;
+        if ($state.previous.name === 'logout' || !$state.previous.name) {
+            previousState = 'home';
+        } else {
+            previousState = $state.previous;
+        }
+        return previousState;
+    };
     ctrl.login = function (username, password) {
         ctrl.loginFailed = null;
         if (username == 'user' && password == 'password') {
             userSession.loggedIn = true;
-            $state.go(ctrl.previousPage);
+            $state.go(ctrl.previousPage());
         } else {
             ctrl.loginFailed = true;
         }
